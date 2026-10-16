@@ -59,26 +59,7 @@ This project was generated entirely inside [Arc Studio](https://studio.arc.io) â
 - The complete React + wagmi + ConnectKit frontend (Client page, Provider page, Deploy page).
 - Deployment to Arc Testnet and Arc Mainnet via Arc Studio's deploy tool and the in-app `/deploy` page.
 
----
 
-## Run locally
-
-```bash
-# Install dependencies
-bun install
-
-# Run Foundry unit tests
-forge test
-
-# Start the dev server
-bun run dev
-```
-
-Requires [Bun](https://bun.sh) and [Foundry](https://getfoundry.sh). The app runs at `http://localhost:5173`.
-
-To point the app at a different contract, update `AGENT_TAB_MAINNET_ADDRESS` in `src/contract.ts`.
-
----
 
 ## Roadmap
 

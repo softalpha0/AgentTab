@@ -24,6 +24,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# ── Runtime logs (may contain RPC traces / tx data) ──────────────────────────
+console.jsonl
+traces.jsonl
+
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
 npm-debug.log*

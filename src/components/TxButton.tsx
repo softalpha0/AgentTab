@@ -2,7 +2,7 @@
  * Reusable transaction button that shows wallet/confirming/success/error states.
  */
 import { useAccount, useSwitchChain } from 'wagmi'
-import { ARC_TESTNET_ID } from '../utils'
+import { ARC_MAINNET_ID } from '../utils'
 
 interface TxButtonProps {
   onClick: () => void
@@ -31,16 +31,16 @@ export function TxButton({
 }: TxButtonProps) {
   const { chainId } = useAccount()
   const { switchChain, isPending: isSwitching } = useSwitchChain()
-  const isWrongChain = chainId !== undefined && chainId !== ARC_TESTNET_ID
+  const isWrongChain = chainId !== undefined && chainId !== ARC_MAINNET_ID
 
   if (isWrongChain) {
     return (
       <button
-        onClick={() => switchChain({ chainId: ARC_TESTNET_ID })}
+        onClick={() => switchChain({ chainId: ARC_MAINNET_ID })}
         disabled={isSwitching}
-        className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors"
+        className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
       >
-        {isSwitching ? 'Switching…' : 'Switch to Arc Testnet'}
+        {isSwitching ? 'Switching…' : 'Switch to Arc Mainnet'}
       </button>
     )
   }

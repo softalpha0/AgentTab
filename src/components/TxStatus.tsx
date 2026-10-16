@@ -3,7 +3,7 @@
  */
 import { CheckCircle, XCircle, ExternalLink } from 'lucide-react'
 import { buildTxExplorerUrl } from '@/onchain-facts'
-import { ARC_TESTNET_ID } from '../utils'
+import { ARC_MAINNET_ID } from '../utils'
 
 interface TxStatusProps {
   isSuccess: boolean
@@ -17,7 +17,7 @@ export function TxStatus({ isSuccess, isError, error, hash, successMessage = 'Tr
   if (!isSuccess && !isError) return null
 
   if (isSuccess) {
-    const explorerUrl = hash ? buildTxExplorerUrl(ARC_TESTNET_ID, hash) : undefined
+    const explorerUrl = hash ? buildTxExplorerUrl(ARC_MAINNET_ID, hash) : undefined
     return (
       <div className="flex items-start gap-2 p-3 rounded-xl bg-[#e8f7ef] text-[var(--success)] text-sm">
         <CheckCircle size={16} className="mt-0.5 shrink-0" />

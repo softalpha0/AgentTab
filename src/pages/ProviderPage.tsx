@@ -3,7 +3,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { parseUnits } from 'viem'
 import { Plus, Zap, ChevronDown, ChevronUp, ReceiptText, X } from 'lucide-react'
 import { AGENT_TAB_ADDRESS, AGENT_TAB_ABI } from '../contract'
-import { ARC_TESTNET_ID, displayUsdc } from '../utils'
+import { ARC_MAINNET_ID, displayUsdc } from '../utils'
 import { useServiceCount, useTabCount, useAllServices, useAllTabs } from '../hooks/useAgentTab'
 import { TxButton } from '../components/TxButton'
 import { TxStatus } from '../components/TxStatus'
@@ -30,7 +30,7 @@ function RegisterServiceCard({ onRegistered }: { onRegistered: () => void }) {
     const priceNum = parseFloat(priceStr)
     if (isNaN(priceNum) || priceNum < 0) { setLocalError('Enter a valid price (0 for free).'); return }
     const priceRaw = parseUnits(priceStr || '0', 6)
-    writeContract({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'registerService', args: [name.trim(), priceRaw], chainId: ARC_TESTNET_ID })
+    writeContract({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'registerService', args: [name.trim(), priceRaw], chainId: ARC_MAINNET_ID })
   }
 
   return (
@@ -106,7 +106,7 @@ function ClaimForm({ tabId, callsClaimed, pricePerCall, balance, onClaimed, onCa
       abi: AGENT_TAB_ABI,
       functionName: 'claim',
       args: [BigInt(tabId), BigInt(totalCalls), sigStr.trim() as `0x${string}`],
-      chainId: ARC_TESTNET_ID,
+      chainId: ARC_MAINNET_ID,
     })
   }
 
@@ -176,7 +176,7 @@ function ProviderTabCard({ tabId, client, balance, callsClaimed, closed, closeRe
 
   function handleCloseByProvider() {
     resetClose()
-    closeByProvider({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'closeByProvider', args: [BigInt(tabId)], chainId: ARC_TESTNET_ID })
+    closeByProvider({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'closeByProvider', args: [BigInt(tabId)], chainId: ARC_MAINNET_ID })
   }
 
   const isClosing = closeRequestedAt > 0n && !closed

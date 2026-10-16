@@ -24,10 +24,10 @@ export function getAgentTabAddress(chainId: number): `0x${string}` | null {
 }
 
 /**
- * @deprecated Use getAgentTabAddress(chainId) instead.
- * Kept for components not yet migrated to multi-chain.
+ * Canonical address used by the public app (Arc mainnet only).
+ * Use getAgentTabAddress(chainId) for multi-chain support.
  */
-export const AGENT_TAB_ADDRESS = AGENT_TAB_TESTNET_ADDRESS
+export const AGENT_TAB_ADDRESS = AGENT_TAB_MAINNET_ADDRESS
 
 export const AGENT_TAB_ABI = [
   // ── constructor ────────────────────────────────────────────────────────────

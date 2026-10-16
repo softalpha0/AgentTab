@@ -78,13 +78,13 @@ export interface SignedReceipt {
 /**
  * Sign a Receipt(tabId, totalCalls) using EIP-712 typed data.
  * Uses wagmi's walletClient under the hood.
- * chainId defaults to Arc Testnet; pass the active chain ID to support mainnet.
+ * chainId defaults to Arc Mainnet (5042).
  */
 export async function signReceipt(
   walletClient: WalletClient,
   tabId: bigint,
   totalCalls: bigint,
-  chainId: number = ARC_TESTNET_ID,
+  chainId: number = ARC_MAINNET_ID,
 ): Promise<`0x${string}`> {
   const contractAddress = getAgentTabAddress(chainId)
   if (!contractAddress) throw new Error(`No AgentTabV2 address for chain ${chainId}`)

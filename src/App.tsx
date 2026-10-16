@@ -1,45 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ConnectKitButton } from 'connectkit'
-import { useAccount } from 'wagmi'
-import { Zap, CreditCard, Rocket } from 'lucide-react'
+import { useAccount, useChainId, useSwitchChain } from 'wagmi'
+import { Zap, CreditCard, AlertTriangle } from 'lucide-react'
 import ProviderPage from './pages/ProviderPage'
 import ClientPage from './pages/ClientPage'
-import DeployPage from './pages/DeployPage'
+import { arc } from './config'
 
-type Tab = 'client' | 'provider' | 'deploy'
+type Tab = 'client' | 'provider'
 
-/** Minimal hash-based router — returns the path fragment after the '#'. */
-function useHashRoute(): string {
-  const [hash, setHash] = useState(() => window.location.hash.replace('#', '') || '/')
-  useEffect(() => {
-    function onHash() { setHash(window.location.hash.replace('#', '') || '/') }
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
-  }, [])
-  return hash
-}
+const ARC_MAINNET_ID = arc.id  // 5042
 
 export default function App() {
-  const route = useHashRoute()
+  const [tab, setTab] = useState<Tab>('client')
   const { isConnected } = useAccount()
+  const chainId = useChainId()
+  const { switchChain } = useSwitchChain()
 
-  // /#/deploy hash route also opens the Deploy tab directly
-  const [tab, setTabState] = useState<Tab>(() =>
-    route === '/deploy' ? 'deploy' : 'client'
-  )
-
-  function setTab(t: Tab) {
-    setTabState(t)
-    window.location.hash = t === 'deploy' ? '/deploy' : '/'
-  }
+  // Wrong network = connected but not on Arc mainnet (includes testnet)
+  const isWrongNetwork = isConnected && chainId !== ARC_MAINNET_ID
 
   return (
     <div className="min-h-dvh bg-[var(--bg)] bg-[image:var(--bg-gradient)]">
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-[var(--surface)] border-b border-[var(--border)]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+          {/* Logo */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0">
               <Zap size={14} className="text-white" />
             </div>
             <span className="font-semibold text-[var(--ink)] tracking-tight display text-base">AgentTab</span>
@@ -72,26 +59,31 @@ export default function App() {
               <Zap size={14} />
               Provider
             </button>
-            <button
-              onClick={() => setTab('deploy')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                tab === 'deploy'
-                  ? 'bg-white shadow-sm text-[var(--ink)]'
-                  : 'text-[var(--muted)] hover:text-[var(--ink-2)]'
-              }`}
-            >
-              <Rocket size={14} />
-              Deploy
-            </button>
           </div>
         </div>
       </header>
 
+      {/* Wrong-network banner — shown for every chain except Arc mainnet (5042), including testnet */}
+      {isWrongNetwork && (
+        <div className="bg-red-50 border-b border-red-200">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
+              <AlertTriangle size={16} className="shrink-0" />
+              Wrong network — this app runs on Arc Mainnet only
+            </div>
+            <button
+              onClick={() => switchChain({ chainId: ARC_MAINNET_ID })}
+              className="shrink-0 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors"
+            >
+              Switch to Arc Mainnet
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Body */}
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {tab === 'deploy' ? (
-          <DeployPage />
-        ) : !isConnected ? (
+        {!isConnected ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-[var(--surface-muted)] flex items-center justify-center">
               <Zap size={28} className="text-[var(--accent)]" />
@@ -103,6 +95,20 @@ export default function App() {
               </p>
             </div>
             <ConnectKitButton label="Connect wallet to start" />
+          </div>
+        ) : isWrongNetwork ? (
+          /* Wallet connected but wrong chain — banner above explains; body stays empty */
+          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center">
+            <AlertTriangle size={36} className="text-red-400" />
+            <p className="text-[var(--muted)] text-sm max-w-xs">
+              Switch to Arc Mainnet to use AgentTab.
+            </p>
+            <button
+              onClick={() => switchChain({ chainId: ARC_MAINNET_ID })}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              Switch to Arc Mainnet
+            </button>
           </div>
         ) : (
           <>

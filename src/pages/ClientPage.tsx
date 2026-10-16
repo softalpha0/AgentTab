@@ -3,13 +3,13 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { erc20Abi, parseUnits } from 'viem'
 import { ReceiptText, CreditCard, PlusCircle, Clock, XCircle, ChevronDown, ChevronUp, Copy, Check, Zap } from 'lucide-react'
 import { AGENT_TAB_ADDRESS, AGENT_TAB_ABI } from '../contract'
-import { ARC_TESTNET_ID, displayUsdc, parseOnchainError, signReceipt, formatCountdown, type SignedReceipt } from '../utils'
+import { ARC_MAINNET_ID, displayUsdc, parseOnchainError, signReceipt, formatCountdown, type SignedReceipt } from '../utils'
 import { useServiceCount, useTabCount, useAllServices, useAllTabs } from '../hooks/useAgentTab'
 import { TxButton } from '../components/TxButton'
 import { TxStatus } from '../components/TxStatus'
-import { getUsdc } from '@/onchain-facts'
 
-const USDC = getUsdc(ARC_TESTNET_ID)!
+// USDC on Arc mainnet: same address as native gas token, 6-decimal ERC-20 view
+const USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
 
 // ─── Open Tab Card ─────────────────────────────────────────────────────────────
 
@@ -36,11 +36,11 @@ function OpenTabCard({ serviceId, serviceName, pricePerCall, onOpened, onCancel 
   const { isLoading: isOpenConfirming, isSuccess: isOpenSuccess } = useWaitForTransactionReceipt({ hash: openHash })
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: USDC.address as `0x${string}`,
+    address: USDC_ADDRESS,
     abi: erc20Abi,
     functionName: 'allowance',
     args: [address ?? '0x0000000000000000000000000000000000000000', AGENT_TAB_ADDRESS],
-    chainId: ARC_TESTNET_ID,
+    chainId: ARC_MAINNET_ID,
     query: { enabled: !!address },
   })
 
@@ -59,12 +59,12 @@ function OpenTabCard({ serviceId, serviceName, pricePerCall, onOpened, onCancel 
   function handleApprove() {
     if (!amountRaw) return
     resetApprove()
-    approve({ address: USDC.address as `0x${string}`, abi: erc20Abi, functionName: 'approve', args: [AGENT_TAB_ADDRESS, amountRaw], chainId: ARC_TESTNET_ID })
+    approve({ address: USDC_ADDRESS, abi: erc20Abi, functionName: 'approve', args: [AGENT_TAB_ADDRESS, amountRaw], chainId: ARC_MAINNET_ID })
   }
   function handleOpen() {
     if (!amountRaw) return
     resetOpen()
-    openTab({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'openTab', args: [BigInt(serviceId), amountRaw], chainId: ARC_TESTNET_ID })
+    openTab({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'openTab', args: [BigInt(serviceId), amountRaw], chainId: ARC_MAINNET_ID })
   }
 
   return (
@@ -194,11 +194,11 @@ function TabCard({ tabId, client, balance, callsClaimed, closed, closeRequestedA
   const { isLoading: isFinConfirming, isSuccess: isFinSuccess } = useWaitForTransactionReceipt({ hash: finHash })
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: USDC.address as `0x${string}`,
+    address: USDC_ADDRESS,
     abi: erc20Abi,
     functionName: 'allowance',
     args: [address ?? '0x0000000000000000000000000000000000000000', AGENT_TAB_ADDRESS],
-    chainId: ARC_TESTNET_ID,
+    chainId: ARC_MAINNET_ID,
     query: { enabled: !!address },
   })
 
@@ -233,21 +233,21 @@ function TabCard({ tabId, client, balance, callsClaimed, closed, closeRequestedA
 
   function handleRequestClose() {
     resetReq()
-    requestClose({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'requestClose', args: [BigInt(tabId)], chainId: ARC_TESTNET_ID })
+    requestClose({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'requestClose', args: [BigInt(tabId)], chainId: ARC_MAINNET_ID })
   }
   function handleFinalize() {
     resetFin()
-    finalizeClose({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'finalizeClose', args: [BigInt(tabId)], chainId: ARC_TESTNET_ID })
+    finalizeClose({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'finalizeClose', args: [BigInt(tabId)], chainId: ARC_MAINNET_ID })
   }
   function handleApproveTopUp() {
     if (!amountRaw) return
     resetApprove()
-    approve({ address: USDC.address as `0x${string}`, abi: erc20Abi, functionName: 'approve', args: [AGENT_TAB_ADDRESS, amountRaw], chainId: ARC_TESTNET_ID })
+    approve({ address: USDC_ADDRESS, abi: erc20Abi, functionName: 'approve', args: [AGENT_TAB_ADDRESS, amountRaw], chainId: ARC_MAINNET_ID })
   }
   function handleTopUp() {
     if (!amountRaw) return
     resetTopUp()
-    topUp({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'topUp', args: [BigInt(tabId), amountRaw], chainId: ARC_TESTNET_ID })
+    topUp({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'topUp', args: [BigInt(tabId), amountRaw], chainId: ARC_MAINNET_ID })
   }
 
   const isOwn = address?.toLowerCase() === client.toLowerCase()
@@ -410,7 +410,7 @@ export default function ClientPage() {
 
   const { data: rawServiceCount, refetch: refetchServiceCount } = useServiceCount()
   const { data: rawTabCount, refetch: refetchTabCount } = useTabCount()
-  const { data: rawCloseDelay } = useReadContract({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'CLOSE_DELAY', chainId: ARC_TESTNET_ID })
+  const { data: rawCloseDelay } = useReadContract({ address: AGENT_TAB_ADDRESS, abi: AGENT_TAB_ABI, functionName: 'CLOSE_DELAY', chainId: ARC_MAINNET_ID })
 
   const serviceCount = Number(rawServiceCount ?? 0n)
   const tabCount = Number(rawTabCount ?? 0n)

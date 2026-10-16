@@ -3,12 +3,12 @@
  */
 import { useReadContract, useReadContracts } from 'wagmi'
 import { AGENT_TAB_ADDRESS, AGENT_TAB_ABI } from '../contract'
-import { ARC_TESTNET_ID } from '../utils'
+import { ARC_MAINNET_ID } from '../utils'
 
 const contractBase = {
   address: AGENT_TAB_ADDRESS,
   abi: AGENT_TAB_ABI,
-  chainId: ARC_TESTNET_ID,
+  chainId: ARC_MAINNET_ID,
 } as const
 
 export type ServiceData = {

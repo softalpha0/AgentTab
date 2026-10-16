@@ -9,7 +9,7 @@
 1. **Open a tab** — a client deposits USDC into a tab for a specific service. Funds sit in the contract.
 2. **Sign receipts** — after each batch of API calls the client signs an EIP-712 receipt containing `(tabId, totalCalls)`. The receipt carries a running total, not a delta.
 3. **Provider claims** — the provider submits the receipt on-chain. The contract pays `(totalCalls − callsClaimed) × pricePerCall` in USDC and advances the high-water mark.
-4. **Two-step close** — the client calls `requestClose`, waits for `CLOSE_DELAY`, then calls `finalizeClose` to get the unspent balance back. The provider can call `closeByProvider` at any time to close and refund immediately.
+4. **Two-step close** — the client calls `requestClose`, which starts a `CLOSE_DELAY` countdown (1 hour on mainnet). During this period the provider can still make a final claim against any outstanding usage. Once the delay has elapsed, the client calls `finalizeClose` to receive the unspent balance. The provider can also call `closeByProvider` at any time to close the tab and send the remaining balance back to the client immediately.
 
 ---
 
@@ -80,10 +80,59 @@ To point the app at a different contract, update `AGENT_TAB_MAINNET_ADDRESS` in 
 
 ---
 
+## Agent SDK
+
+`sdk/agenttab.ts` is a small TypeScript library (built on viem) for AI agents acting as clients.
+
+### Functions
+
+```ts
+import { signReceipt, verifyReceipt, AgentTabClient } from './sdk/agenttab'
+```
+
+**`signReceipt(walletClient, tabId, totalCalls)`** — signs an EIP-712 `Receipt(tabId, totalCalls)` using the deployed mainnet domain. Returns `{ tabId, totalCalls, signature, signer }`.
+
+**`verifyReceipt(receipt, expectedSigner, publicClient?)`** — recovers the signer from the receipt off-chain (EOA) or calls `isValidSignature` on-chain (ERC-1271 smart-contract wallets). Returns `true` if the receipt is valid.
+
+**`AgentTabClient`** — stateful wrapper that keeps a per-tab call counter.
+
+```ts
+const agent = new AgentTabClient(walletClient)
+
+// After each API call:
+const receipt = await agent.recordCall(tabId)  // increments counter, signs receipt
+console.log(receipt.totalCalls)                // running total
+
+// Provider can verify before serving:
+const ok = await verifyReceipt(receipt, clientAddress)
+
+// After close:
+agent.resetTab(tabId)
+```
+
+### Demo
+
+Simulates an agent making 5 API calls and printing the final claimable receipt:
+
+```bash
+AGENT_PRIVATE_KEY=0x<your-key> TAB_ID=0 bun scripts/agent-demo.ts
+```
+
+The private key is read only from the environment variable — never hardcode it.
+
+### Tests
+
+```bash
+bun test sdk/agenttab.test.ts
+```
+
+Covers: `signReceipt` domain correctness (chainId 5042, mainnet contract address), signature uniqueness, `verifyReceipt` accept/reject cases (wrong signer, tampered signature, altered message), and `AgentTabClient` counter lifecycle (monotonic increment, per-tab isolation, reset).
+
+---
+
 ## Roadmap
 
 - **Service metadata on-chain or IPFS** — add a URI field to `registerService` so clients can discover pricing and descriptions without off-chain coordination.
-- **Dispute window** — a short period after `requestClose` where the provider can make a final claim before the refund is released.
-- **Provider-side receipt generation helper** — a small TypeScript library that signs receipts server-side so providers can issue them without manual EIP-712 construction.
+- **Agent SDK — npm package** — publish `sdk/agenttab.ts` as `@agenttab/sdk` so agents can install it directly.
 - **Multi-token support** — accept any ERC-20 with 6 or 18 decimals, not just USDC.
 - **Subscription mode** — fixed monthly fee debited automatically using a signed recurring receipt, without per-call granularity.

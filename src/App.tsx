@@ -1,22 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount, useChainId, useSwitchChain } from 'wagmi'
 import { Zap, CreditCard, AlertTriangle } from 'lucide-react'
 import ProviderPage from './pages/ProviderPage'
 import ClientPage from './pages/ClientPage'
+import DeployPage from './pages/DeployPage'
+import LandingPage from './pages/LandingPage'
 import { arc } from './config'
-
-type Tab = 'client' | 'provider'
 
 const ARC_MAINNET_ID = arc.id  // 5042
 
-export default function App() {
-  const [tab, setTab] = useState<Tab>('client')
+// ---------------------------------------------------------------------------
+// Hash router
+// ---------------------------------------------------------------------------
+
+function useHash(): string {
+  const [hash, setHash] = useState(() => window.location.hash)
+  useEffect(() => {
+    const handler = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', handler)
+    return () => window.removeEventListener('hashchange', handler)
+  }, [])
+  return hash
+}
+
+// ---------------------------------------------------------------------------
+// App shell (/#/app, /#/deploy)
+// ---------------------------------------------------------------------------
+
+type Tab = 'client' | 'provider' | 'deploy'
+
+function AppShell() {
+  const hash = useHash()
+  // Derive active tab directly from hash — no setState in an effect
+  const tab: Tab = hash === '#/deploy' ? 'deploy' : hash.startsWith('#/app/provider') ? 'provider' : 'client'
+  // Allow explicit tab override via local state when the hash doesn't encode a tab
+  const [manualTab, setManualTab] = useState<Tab | null>(null)
+  const activeTab: Tab = (hash === '#/app' && manualTab) ? manualTab : tab
+
   const { isConnected } = useAccount()
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
 
-  // Wrong network = connected but not on Arc mainnet (includes testnet)
   const isWrongNetwork = isConnected && chainId !== ARC_MAINNET_ID
 
   return (
@@ -24,13 +49,12 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-[var(--surface)] border-b border-[var(--border)]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2 min-w-0">
+          <a href="/" className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center shrink-0">
               <Zap size={14} className="text-white" />
             </div>
             <span className="font-semibold text-[var(--ink)] tracking-tight display text-base">AgentTab</span>
-          </div>
+          </a>
           <ConnectKitButton />
         </div>
 
@@ -38,9 +62,9 @@ export default function App() {
         <div className="max-w-2xl mx-auto px-4 pb-3">
           <div className="flex gap-1 p-1 bg-[var(--surface-muted)] rounded-xl">
             <button
-              onClick={() => setTab('client')}
+              onClick={() => { setManualTab('client'); window.location.hash = '/app' }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                tab === 'client'
+                activeTab === 'client'
                   ? 'bg-white shadow-sm text-[var(--ink)]'
                   : 'text-[var(--muted)] hover:text-[var(--ink-2)]'
               }`}
@@ -49,9 +73,9 @@ export default function App() {
               Client
             </button>
             <button
-              onClick={() => setTab('provider')}
+              onClick={() => { setManualTab('provider'); window.location.hash = '/app' }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                tab === 'provider'
+                activeTab === 'provider'
                   ? 'bg-white shadow-sm text-[var(--ink)]'
                   : 'text-[var(--muted)] hover:text-[var(--ink-2)]'
               }`}
@@ -59,12 +83,23 @@ export default function App() {
               <Zap size={14} />
               Provider
             </button>
+            <button
+              onClick={() => { setManualTab('deploy'); window.location.hash = '/deploy' }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'deploy'
+                  ? 'bg-white shadow-sm text-[var(--ink)]'
+                  : 'text-[var(--muted)] hover:text-[var(--ink-2)]'
+              }`}
+            >
+              <Zap size={14} />
+              Deploy
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Wrong-network banner — shown for every chain except Arc mainnet (5042), including testnet */}
-      {isWrongNetwork && (
+      {/* Wrong-network banner — only on app, not deploy */}
+      {isWrongNetwork && activeTab !== 'deploy' && (
         <div className="bg-red-50 border-b border-red-200">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
@@ -83,7 +118,9 @@ export default function App() {
 
       {/* Body */}
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {!isConnected ? (
+        {activeTab === 'deploy' ? (
+          <DeployPage />
+        ) : !isConnected ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-[var(--surface-muted)] flex items-center justify-center">
               <Zap size={28} className="text-[var(--accent)]" />
@@ -97,7 +134,6 @@ export default function App() {
             <ConnectKitButton label="Connect wallet to start" />
           </div>
         ) : isWrongNetwork ? (
-          /* Wallet connected but wrong chain — banner above explains; body stays empty */
           <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center">
             <AlertTriangle size={36} className="text-red-400" />
             <p className="text-[var(--muted)] text-sm max-w-xs">
@@ -112,11 +148,21 @@ export default function App() {
           </div>
         ) : (
           <>
-            {tab === 'client' && <ClientPage />}
-            {tab === 'provider' && <ProviderPage />}
+            {activeTab === 'client' && <ClientPage />}
+            {activeTab === 'provider' && <ProviderPage />}
           </>
         )}
       </main>
     </div>
   )
+}
+
+// ---------------------------------------------------------------------------
+// Root router: / → LandingPage, /#/app or /#/deploy → AppShell
+// ---------------------------------------------------------------------------
+
+export default function App() {
+  const hash = useHash()
+  const isApp = hash.startsWith('#/app') || hash.startsWith('#/deploy')
+  return isApp ? <AppShell /> : <LandingPage />
 }

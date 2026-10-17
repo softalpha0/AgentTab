@@ -55,7 +55,7 @@ This project was generated entirely inside [Arc Studio](https://studio.arc.io) �
 
 - `contracts/AgentTabV2.sol` — the full Solidity contract, written to spec.
 - `contracts/test/AgentTabV2.t.sol` — 18 Foundry unit tests + 1 fuzz test, all passing.
-- Security review at max severity (two rounds across a rule-corpus auditor and a functional auditor); four findings fixed between rounds. Slither static analysis: zero High/Medium findings.
+- Automated security and functional reviews in Arc Studio (two rounds, four findings fixed); Slither static analysis: zero High/Medium findings. 18 passing Foundry tests. Not a third-party audit.
 - The complete React + wagmi + ConnectKit frontend (Client page, Provider page, Deploy page).
 - Deployment to Arc Testnet and Arc Mainnet via Arc Studio's deploy tool and the in-app `/deploy` page.
 

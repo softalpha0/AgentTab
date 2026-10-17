@@ -241,7 +241,7 @@ const FEATURES = [
   { icon: <IconShield size={18} />, title: 'Replay-proof receipts', body: 'Monotonic totalCalls high-water mark stored on-chain. Stale or duplicate receipts revert.' },
   { icon: <IconCode size={18} />, title: 'AI agent native', body: 'ERC-1271 support via SignatureChecker — works with smart-contract agent wallets, not just EOAs.' },
   { icon: <IconClock size={18} />, title: 'Safe two-step close', body: '1-hour close window lets providers make a final claim before any refund is released.' },
-  { icon: <IconZap size={18} />, title: 'Audited and tested', body: '18 Foundry unit tests + fuzz, two-round max-severity security review, Slither static analysis.' },
+  { icon: <IconZap size={18} />, title: 'Security-reviewed', body: 'Automated security and functional reviews in Arc Studio, Slither static analysis, and 18 passing Foundry tests. Not a third-party audit.' },
   { icon: <IconCoins size={18} />, title: 'USDC on Arc', body: 'USDC is the native gas token on Arc. Stable, fast, and predictable transaction fees.' },
 ]
 

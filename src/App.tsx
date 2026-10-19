@@ -4,7 +4,6 @@ import { useAccount, useChainId, useSwitchChain } from 'wagmi'
 import { Zap, CreditCard, AlertTriangle } from 'lucide-react'
 import ProviderPage from './pages/ProviderPage'
 import ClientPage from './pages/ClientPage'
-import DeployPage from './pages/DeployPage'
 import LandingPage from './pages/LandingPage'
 import { arc } from './config'
 
@@ -25,16 +24,14 @@ function useHash(): string {
 }
 
 // ---------------------------------------------------------------------------
-// App shell (/#/app, /#/deploy)
+// App shell (/#/app only — /#/deploy redirects here)
 // ---------------------------------------------------------------------------
 
-type Tab = 'client' | 'provider' | 'deploy'
+type Tab = 'client' | 'provider'
 
 function AppShell() {
   const hash = useHash()
-  // Derive active tab directly from hash — no setState in an effect
-  const tab: Tab = hash === '#/deploy' ? 'deploy' : hash.startsWith('#/app/provider') ? 'provider' : 'client'
-  // Allow explicit tab override via local state when the hash doesn't encode a tab
+  const tab: Tab = hash.startsWith('#/app/provider') ? 'provider' : 'client'
   const [manualTab, setManualTab] = useState<Tab | null>(null)
   const activeTab: Tab = (hash === '#/app' && manualTab) ? manualTab : tab
 
@@ -83,23 +80,12 @@ function AppShell() {
               <Zap size={14} />
               Provider
             </button>
-            <button
-              onClick={() => { setManualTab('deploy'); window.location.hash = '/deploy' }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                activeTab === 'deploy'
-                  ? 'bg-white shadow-sm text-[var(--ink)]'
-                  : 'text-[var(--muted)] hover:text-[var(--ink-2)]'
-              }`}
-            >
-              <Zap size={14} />
-              Deploy
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Wrong-network banner — only on app, not deploy */}
-      {isWrongNetwork && activeTab !== 'deploy' && (
+      {/* Wrong-network banner */}
+      {isWrongNetwork && (
         <div className="bg-red-50 border-b border-red-200">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
@@ -118,9 +104,7 @@ function AppShell() {
 
       {/* Body */}
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {activeTab === 'deploy' ? (
-          <DeployPage />
-        ) : !isConnected ? (
+        {!isConnected ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-[var(--surface-muted)] flex items-center justify-center">
               <Zap size={28} className="text-[var(--accent)]" />
@@ -158,11 +142,19 @@ function AppShell() {
 }
 
 // ---------------------------------------------------------------------------
-// Root router: / → LandingPage, /#/app or /#/deploy → AppShell
+// Root router: / → LandingPage, /#/app → AppShell, /#/deploy → redirect to /#/app
 // ---------------------------------------------------------------------------
 
 export default function App() {
   const hash = useHash()
+
+  // Redirect any /#/deploy URL to /#/app
+  useEffect(() => {
+    if (hash.startsWith('#/deploy')) {
+      window.location.hash = '/app'
+    }
+  }, [hash])
+
   const isApp = hash.startsWith('#/app') || hash.startsWith('#/deploy')
   return isApp ? <AppShell /> : <LandingPage />
 }
